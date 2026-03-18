@@ -14,8 +14,9 @@ const files = fs.readdirSync(modelDir).filter(f => f.endsWith('.gguf'));
 
 files.forEach((file, index) => {
     const shardIndex = index + 1;
-    const pkgName = `qwen2.5-0.5b-shard-${shardIndex}`;
+    const pkgName = `llama-cpp-Qwen2.5-0.5b-shard-${shardIndex}`;
     const pkgDir = path.join(packagesDir, pkgName);
+    const npmUsername = '@joelrd01';
 
     if (!fs.existsSync(pkgDir)) {
         fs.mkdirSync(pkgDir, { recursive: true });
@@ -52,12 +53,34 @@ console.log('Sincronizado: ' + SHARD_FILE + ' en ' + targetPath);
 
     // Create package.json
     const packageJson = {
-        name: `@models/${pkgName}`,
+        name: `${npmUsername}/${pkgName.toLowerCase()}`,
         version: "1.0.0",
         description: `Shard ${shardIndex} of Qwen2.5-0.5b`,
         main: "sync.js",
         scripts: {
             "postinstall": "node sync.js"
+        },
+        keywords: [
+            "llama",
+            "llama-cpp",
+            "qwen",
+            "qwen2.5",
+            "model",
+            "gguf",
+            "shard"
+        ],
+        author: "",
+        license: "ISC",
+        engines: {
+            "node": ">=14.0.0"
+        },
+        files: [
+            "sync.js",
+            "*.gguf"
+        ],
+        repository: {
+            "type": "git",
+            "url": "git+https://github.com/user/project.git"
         }
     };
     fs.writeFileSync(path.join(pkgDir, 'package.json'), JSON.stringify(packageJson, null, 2));
