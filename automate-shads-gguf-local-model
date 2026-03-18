@@ -1,0 +1,68 @@
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const modelDir = path.join(__dirname, 'qwen2.5:0.5b');
+const packagesDir = path.join(__dirname, 'packages');
+
+if (!fs.existsSync(packagesDir)) {
+    fs.mkdirSync(packagesDir);
+}
+
+const files = fs.readdirSync(modelDir).filter(f => f.endsWith('.gguf'));
+
+files.forEach((file, index) => {
+    const shardIndex = index + 1;
+    const pkgName = `qwen2.5-0.5b-shard-${shardIndex}`;
+    const pkgDir = path.join(packagesDir, pkgName);
+
+    if (!fs.existsSync(pkgDir)) {
+        fs.mkdirSync(pkgDir, { recursive: true });
+    }
+
+    // Move file to package
+    const oldPath = path.join(modelDir, file);
+    const newPath = path.join(pkgDir, file);
+    fs.renameSync(oldPath, newPath);
+
+    // Create sync.js
+    const syncJs = `
+const fs = require('fs');
+const path = require('path');
+
+const TARGET_DIR_NAME = 'qwen2.5:0.5b';
+const SHARD_FILE = '${file}';
+
+// Path relative to node_modules/pkg/sync.js
+const projectRoot = path.join(__dirname, '../../..');
+const targetPath = path.join(projectRoot, TARGET_DIR_NAME);
+
+if (!fs.existsSync(targetPath)) {
+    fs.mkdirSync(targetPath, { recursive: true });
+}
+
+fs.copyFileSync(
+    path.join(__dirname, SHARD_FILE),
+    path.join(targetPath, SHARD_FILE)
+);
+console.log('Sincronizado: ' + SHARD_FILE + ' en ' + targetPath);
+`;
+    fs.writeFileSync(path.join(pkgDir, 'sync.js'), syncJs);
+
+    // Create package.json
+    const packageJson = {
+        name: `@models/${pkgName}`,
+        version: "1.0.0",
+        description: `Shard ${shardIndex} of Qwen2.5-0.5b`,
+        main: "sync.js",
+        scripts: {
+            "postinstall": "node sync.js"
+        }
+    };
+    fs.writeFileSync(path.join(pkgDir, 'package.json'), JSON.stringify(packageJson, null, 2));
+
+    console.log(`Paquete creado: ${pkgName} con el archivo ${file}`);
+});
+
+console.log('¡Proceso completado! Los fragmentos se han movido a la carpeta "packages/".');
