@@ -1,0 +1,43 @@
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { spawn } from 'child_process';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const packagesDir = path.join(__dirname, 'packages');
+
+if (fs.existsSync(packagesDir)) {
+    const files = fs.readdirSync(packagesDir);
+    
+    async function publishAll() {
+        for (const dir of files) {
+            const pkgDir = path.join(packagesDir, dir);
+            const pkgJsonPath = path.join(pkgDir, 'package.json');
+            
+            if (fs.existsSync(pkgJsonPath)) {
+                console.log(`\n📦 Publicando ${dir}...`);
+                await new Promise((resolve) => {
+                    const npmPublish = spawn('npm', ['publish', '--access', 'public'], {
+                        cwd: pkgDir,
+                        stdio: 'inherit',
+                        shell: true // needed on some environments for npm
+                    });
+                    
+                    npmPublish.on('close', (code) => {
+                        if (code === 0) {
+                            console.log(`✅ ${dir} publicado con éxito.`);
+                        } else {
+                            console.error(`❌ Error al publicar ${dir}. (Código: ${code})`);
+                        }
+                        resolve();
+                    });
+                });
+            }
+        }
+        console.log('\n🎉 Proceso de publicación finalizado.');
+    }
+    
+    publishAll();
+} else {
+    console.log("No se encontró la carpeta 'packages'.");
+}
