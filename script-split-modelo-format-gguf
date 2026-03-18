@@ -1,0 +1,6 @@
+Commad split local model fragment 
+
+-size = en el peso de los prgamentos del modelos, ejemplo: 50M o 50G
+-url path = a la url del modelo (absuluta) , ejemplo: models/qwen-2.5:0.5b/model.gguf
+
+./llama-gguf-split --split --split-max-size (size) (url path local model)  qwen2.5:0.5b
