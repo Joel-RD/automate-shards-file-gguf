@@ -1,0 +1,1 @@
+curl -L https://github.com/Joel-RD/url-project/archive/refs/heads/rama-del-archivo.tar.gz | tar -xz --strip-components=1 "direccion absoluta de lo que se va a descargar"
